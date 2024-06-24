@@ -29,7 +29,10 @@ async function main() {
     return core.setFailed('No pr number found');
   }
 
-  const result = await createComment({ ...github.context.repo, body: message, issue_number: currentPR });
+  const formattedMessage = JSON.stringify(JSON.parse(message), null, 2);
+  const comment = `\`\`\`json\n${formattedMessage}\n\`\`\``;
+
+  const result = await createComment({ ...github.context.repo, body: comment, issue_number: currentPR });
   core.setOutput('Result', result);
 }
 
