@@ -1,0 +1,23 @@
+name: 📦 Verify PR
+
+on: pull_request
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🛒 Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: 🍲 Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: 💾 Install
+        run: bun install
+
+      - name: 🔍 Run linter
+        run: bun run lint
+
+      - name: 🆎 Run type checker
+        run: bun run type-check

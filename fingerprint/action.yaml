@@ -1,0 +1,20 @@
+---
+name: Fingerprint Native Changes
+author: Alexander Hirdman
+description: Diff fingerptints between current commit and another
+
+runs:
+  using: node20
+  main: ../build/fingerprint/index.js
+inputs:
+  profile:
+    description: The profile that is ran. Options are `production` or `pull-request`
+    required: true
+  base-commit:
+    description: Commit to check against, if supplied; will overwrite profile when checking out base branch to run diff against
+    required: false
+outputs:
+  includes-changes:
+    description: Whether there are changes that prevent the commit from being properly deployed with the current client.
+  diff:
+    description: The diff between the two commits.
