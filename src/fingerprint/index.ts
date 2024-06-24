@@ -82,7 +82,7 @@ async function getPrevFingerprint({
   if (profile === 'production') {
     if (!storedProductionCommit) {
       core.setFailed('Ran Fingerprint check on Production profile without a stored build commit');
-      throw new Error()
+      throw new Error();
     }
 
     await checkoutCommit(storedProductionCommit);
@@ -118,7 +118,7 @@ interface FingerprintResult {
 function createDiff({ currentFingerprint, previousFingerprint }: CreateDiffArgs): FingerprintResult {
   if (!currentFingerprint || !previousFingerprint) {
     core.setFailed('Fingerprints not found. Aborting.');
-    throw new Error()
+    throw new Error();
   }
 
   const diff = diffFingerprints(currentFingerprint, previousFingerprint);

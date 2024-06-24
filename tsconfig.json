@@ -1,9 +1,6 @@
 {
   "compilerOptions": {
-    "lib": [
-      "ESNext",
-      "DOM"
-    ],
+    "lib": ["ESNext", "DOM"],
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",
@@ -20,8 +17,5 @@
     "noPropertyAccessFromIndexSignature": false,
     "outDir": "./build"
   },
-  "exclude": [
-    "build",
-    "node_modules"
-  ]
+  "exclude": ["build", "node_modules"]
 }
