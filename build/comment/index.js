@@ -30973,15 +30973,34 @@ async function createComment(args) {
     return result;
 }
 async function main() {
-    const message = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('message');
     const currentPR = _actions_github__WEBPACK_IMPORTED_MODULE_0__.context.payload.pull_request?.number;
     if (!currentPR) {
         return _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed('No pr number found');
     }
-    const formattedMessage = JSON.stringify(JSON.parse(message), null, 2);
-    const comment = `\`\`\`json\n${formattedMessage}\n\`\`\``;
-    const result = await createComment({ ..._actions_github__WEBPACK_IMPORTED_MODULE_0__.context.repo, body: comment, issue_number: currentPR });
-    _actions_core__WEBPACK_IMPORTED_MODULE_1__.setOutput('Result', result);
+    const message = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('message', { required: false });
+    const commentTemplate = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('template', { required: false });
+    const fingerprintDiff = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('fingerprint-diff', { required: false });
+    if (commentTemplate !== 'fingerprint' && !message) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed('If no template is used, a message is required');
+        return;
+    }
+    if (commentTemplate === 'fingerprint' && !fingerprintDiff) {
+        _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed('Using a fingperint comment template requires a fingerprint-diff input');
+        return;
+    }
+    if (commentTemplate === 'fingerprint') {
+        const formattedDiff = JSON.stringify(JSON.parse(fingerprintDiff), null, 2);
+        const comment = `This Pull Request introduces fingerprint changes against the base commit:
+<details><summary>Fingerprint diff</summary>
+
+\`\`\`json
+${formattedDiff}
+\`\`\`
+</details>`;
+        await createComment({ ..._actions_github__WEBPACK_IMPORTED_MODULE_0__.context.repo, body: comment, issue_number: currentPR });
+        return;
+    }
+    await createComment({ ..._actions_github__WEBPACK_IMPORTED_MODULE_0__.context.repo, body: message, issue_number: currentPR });
 }
 main();
 

@@ -12,7 +12,13 @@ inputs:
     required: true
   message:
     description: Message to be sent in comment
-    required: true
+    required: false
+  template:
+    description: Optional pre-defined comment template, can be "none" or "fingerprint"
+    required: false
+  fingerprint-diff:
+    description: Used with a "fingerprint" - template to pretty print fingerprint JSON output
+    required: false
 outputs:
   result:
     description: Sample result for now
