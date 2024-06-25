@@ -1,64 +1,76 @@
 import * as github from '@actions/github';
 import * as core from '@actions/core';
-
-interface CreateCommentArgs {
-  owner: string;
-  repo: string;
-  issue_number: number;
-  body: string;
-}
-
-type CommentTemplate = 'none' | 'fingerprint';
-
-async function createComment(args: CreateCommentArgs) {
-  const myToken = core.getInput('github-token');
-  const octokit = github.getOctokit(myToken);
-  const result = octokit.rest.issues.createComment({
-    owner: args.owner,
-    repo: args.repo,
-    issue_number: args.issue_number,
-    body: args.body,
-  });
-
-  return result;
-}
+import * as input from './input';
+import {
+  createBodyWithIdentifier,
+  createComment,
+  createCommentIdentifier,
+  getPreviousComment,
+  updateComment,
+} from './comment';
 
 async function main() {
-  const currentPR = github.context.payload.pull_request?.number;
+  try {
+    const issue_number = github.context.payload.pull_request?.number;
 
-  if (!currentPR) {
-    return core.setFailed('No pr number found');
-  }
+    if (!issue_number) {
+      throw new Error('No pr number found');
+    }
 
-  const message = core.getInput('message', { required: false });
-  const commentTemplate = core.getInput('template', { required: false }) as CommentTemplate;
-  const fingerprintDiff = core.getInput('fingerprint-diff', { required: false });
+    if (input.commentTemplate !== 'fingerprint' && !input.message) {
+      throw new Error('If no template is used, a message is required');
+    }
 
-  if (commentTemplate !== 'fingerprint' && !message) {
-    core.setFailed('If no template is used, a message is required');
-    return;
-  }
+    if (input.commentTemplate === 'fingerprint' && !input.fingerprintDiff) {
+      throw new Error('Using a fingperint comment template requires a fingerprint-diff input');
+    }
 
-  if (commentTemplate === 'fingerprint' && !fingerprintDiff) {
-    core.setFailed('Using a fingperint comment template requires a fingerprint-diff input');
-    return;
-  }
+    const octokit = github.getOctokit(input.githubToken);
 
-  if (commentTemplate === 'fingerprint') {
-    const formattedDiff = JSON.stringify(JSON.parse(fingerprintDiff), null, 2);
-    const comment = `This Pull Request introduces fingerprint changes against the base commit:
+    const previousComment = await getPreviousComment({
+      ...github.context.repo,
+      commentId: input.commentId,
+      octokit,
+      issue_number,
+    });
+
+    if (input.commentTemplate === 'fingerprint') {
+      const formattedDiff = JSON.stringify(JSON.parse(input.fingerprintDiff), null, 2);
+      const body = `This Pull Request introduces fingerprint changes against the base commit:
 <details><summary>Fingerprint diff</summary>
 
 \`\`\`json
 ${formattedDiff}
 \`\`\`
-</details>`;
+</details>\n${input.commentId ? createCommentIdentifier(input.commentId) : ''}
+`;
 
-    await createComment({ ...github.context.repo, body: comment, issue_number: currentPR });
-    return;
+      if (previousComment) {
+        core.debug('Fount existing comment, updating...');
+        await updateComment({ ...github.context.repo, octokit, body, issue_number, commentId: previousComment.id });
+        return;
+      }
+
+      core.debug('Did not find a previous comment, creating new');
+
+      await createComment({ ...github.context.repo, octokit, body, issue_number });
+      return;
+    }
+
+    const body = createBodyWithIdentifier(input.message, input.commentId);
+
+    if (previousComment) {
+      core.debug('Fount existing comment, updating...');
+      await updateComment({ ...github.context.repo, octokit, body, issue_number, commentId: previousComment.id });
+      return;
+    }
+
+    core.debug('Did not fint existing comment, creating new');
+
+    await createComment({ ...github.context.repo, octokit, body, issue_number });
+  } catch (error) {
+    error instanceof Error ? core.setFailed(error.message) : core.setFailed('Unknown error');
   }
-
-  await createComment({ ...github.context.repo, body: message, issue_number: currentPR });
 }
 
 main();

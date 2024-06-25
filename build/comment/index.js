@@ -30918,35 +30918,6 @@ module.exports = parseParams
 /******/ }
 /******/ 
 /************************************************************************/
-/******/ /* webpack/runtime/compat get default export */
-/******/ (() => {
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__nccwpck_require__.n = (module) => {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			() => (module['default']) :
-/******/ 			() => (module);
-/******/ 		__nccwpck_require__.d(getter, { a: getter });
-/******/ 		return getter;
-/******/ 	};
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/define property getters */
-/******/ (() => {
-/******/ 	// define getter functions for harmony exports
-/******/ 	__nccwpck_require__.d = (exports, definition) => {
-/******/ 		for(var key in definition) {
-/******/ 			if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
-/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
-/******/ 			}
-/******/ 		}
-/******/ 	};
-/******/ })();
-/******/ 
-/******/ /* webpack/runtime/hasOwnProperty shorthand */
-/******/ (() => {
-/******/ 	__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
-/******/ })();
-/******/ 
 /******/ /* webpack/runtime/compat */
 /******/ 
 /******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
@@ -30955,52 +30926,123 @@ module.exports = parseParams
 var __webpack_exports__ = {};
 // This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
 (() => {
-/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(5438);
-/* harmony import */ var _actions_github__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_github__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(2186);
-/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_1__);
+
+// EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
+var github = __nccwpck_require__(5438);
+// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
+var core = __nccwpck_require__(2186);
+;// CONCATENATED MODULE: ./src/comment/input.ts
+
+const githubToken = core.getInput('github-token', { required: true });
+const message = core.getInput('message', { required: false });
+const commentId = core.getInput('comment-id', { required: false });
+const commentTemplate = core.getInput('template', { required: false });
+const fingerprintDiff = core.getInput('fingerprint-diff', { required: false });
+
+// EXTERNAL MODULE: ./node_modules/@actions/github/lib/utils.js
+var utils = __nccwpck_require__(3030);
+;// CONCATENATED MODULE: ./src/comment/comment.ts
 
 
+function createCommentIdentifier(commentId) {
+    return `<!-- comment-id: ${commentId} -->`;
+}
+function createBodyWithIdentifier(body, commentId) {
+    return `${body}\n${createCommentIdentifier(commentId)}`;
+}
+async function getPreviousComment(args) {
+    const result = await args.octokit.rest.issues.listComments({
+        owner: args.owner,
+        repo: args.repo,
+        issue_number: args.issue_number,
+    });
+    if (result.status !== 200) {
+        throw new Error(`Failed getting pull-request comments. Reason: [${JSON.stringify(result.data, null, 2)}]`);
+    }
+    const commentIdentifier = createCommentIdentifier(commentId);
+    const previousComment = result.data.find((comment) => comment.body?.includes(commentIdentifier));
+    return previousComment ? { id: previousComment.id } : undefined;
+}
 async function createComment(args) {
-    const myToken = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('github-token');
-    const octokit = _actions_github__WEBPACK_IMPORTED_MODULE_0__.getOctokit(myToken);
-    const result = octokit.rest.issues.createComment({
+    const result = await args.octokit.rest.issues.createComment({
         owner: args.owner,
         repo: args.repo,
         issue_number: args.issue_number,
         body: args.body,
     });
-    return result;
+    if (result.status !== 201) {
+        throw new Error(`Failed creating comment. Reason: [${JSON.stringify(result.data, null, 2)}]`);
+    }
+    return result.data.id;
 }
+async function updateComment(args) {
+    const result = await args.octokit.rest.issues.updateComment({
+        owner: args.owner,
+        repo: args.repo,
+        comment_id: args.commentId,
+        body: args.body,
+    });
+    if (result.status !== 200) {
+        throw new Error(`Failed updating comment. Reason: [${JSON.stringify(result.data, null, 2)}]`);
+    }
+    return result.data.id;
+}
+
+;// CONCATENATED MODULE: ./src/comment/index.ts
+
+
+
+
 async function main() {
-    const currentPR = _actions_github__WEBPACK_IMPORTED_MODULE_0__.context.payload.pull_request?.number;
-    if (!currentPR) {
-        return _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed('No pr number found');
-    }
-    const message = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('message', { required: false });
-    const commentTemplate = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('template', { required: false });
-    const fingerprintDiff = _actions_core__WEBPACK_IMPORTED_MODULE_1__.getInput('fingerprint-diff', { required: false });
-    if (commentTemplate !== 'fingerprint' && !message) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed('If no template is used, a message is required');
-        return;
-    }
-    if (commentTemplate === 'fingerprint' && !fingerprintDiff) {
-        _actions_core__WEBPACK_IMPORTED_MODULE_1__.setFailed('Using a fingperint comment template requires a fingerprint-diff input');
-        return;
-    }
-    if (commentTemplate === 'fingerprint') {
-        const formattedDiff = JSON.stringify(JSON.parse(fingerprintDiff), null, 2);
-        const comment = `This Pull Request introduces fingerprint changes against the base commit:
+    try {
+        const issue_number = github.context.payload.pull_request?.number;
+        if (!issue_number) {
+            throw new Error('No pr number found');
+        }
+        if (commentTemplate !== 'fingerprint' && !message) {
+            throw new Error('If no template is used, a message is required');
+        }
+        if (commentTemplate === 'fingerprint' && !fingerprintDiff) {
+            throw new Error('Using a fingperint comment template requires a fingerprint-diff input');
+        }
+        const octokit = github.getOctokit(githubToken);
+        const previousComment = await getPreviousComment({
+            ...github.context.repo,
+            commentId: commentId,
+            octokit,
+            issue_number,
+        });
+        if (commentTemplate === 'fingerprint') {
+            const formattedDiff = JSON.stringify(JSON.parse(fingerprintDiff), null, 2);
+            const body = `This Pull Request introduces fingerprint changes against the base commit:
 <details><summary>Fingerprint diff</summary>
 
 \`\`\`json
 ${formattedDiff}
 \`\`\`
-</details>`;
-        await createComment({ ..._actions_github__WEBPACK_IMPORTED_MODULE_0__.context.repo, body: comment, issue_number: currentPR });
-        return;
+</details>\n${commentId ? createCommentIdentifier(commentId) : ''}
+`;
+            if (previousComment) {
+                core.debug('Fount existing comment, updating...');
+                await updateComment({ ...github.context.repo, octokit, body, issue_number, commentId: previousComment.id });
+                return;
+            }
+            core.debug('Did not find a previous comment, creating new');
+            await createComment({ ...github.context.repo, octokit, body, issue_number });
+            return;
+        }
+        const body = createBodyWithIdentifier(message, commentId);
+        if (previousComment) {
+            core.debug('Fount existing comment, updating...');
+            await updateComment({ ...github.context.repo, octokit, body, issue_number, commentId: previousComment.id });
+            return;
+        }
+        core.debug('Did not fint existing comment, creating new');
+        await createComment({ ...github.context.repo, octokit, body, issue_number });
     }
-    await createComment({ ..._actions_github__WEBPACK_IMPORTED_MODULE_0__.context.repo, body: message, issue_number: currentPR });
+    catch (error) {
+        error instanceof Error ? core.setFailed(error.message) : core.setFailed('Unknown error');
+    }
 }
 main();
 
