@@ -31008,61 +31008,55 @@ async function main() {
     try {
         const issue_number = github.context.payload.pull_request?.number;
         if (!issue_number) {
-            throw new Error('No pr number found');
+            throw new Error('No PR number found');
         }
-        if (commentTemplate !== 'fingerprint' && !message) {
-            throw new Error('If no template is used, a message is required');
-        }
-        if (commentTemplate === 'fingerprint' && !fingerprintDiff) {
-            throw new Error('Using a fingperint comment template requires a fingerprint-diff input');
-        }
-        if (deleteOld && !commentId) {
-            throw new Error('Cannot delete a comment without an ID');
-        }
+        validateInputs();
         const octokit = github.getOctokit(githubToken);
-        const previousComment = await getPreviousComment({
-            ...github.context.repo,
-            commentId: commentId,
-            octokit,
-            issue_number,
-        });
+        const repoContext = { ...github.context.repo, octokit, issue_number };
+        const previousComment = await getPreviousComment({ ...repoContext, commentId: commentId });
         if (deleteOld) {
             if (previousComment) {
-                await deleteComment({ ...github.context.repo, octokit, issue_number, commentId: previousComment.id });
+                await deleteComment({ ...repoContext, commentId: previousComment.id });
             }
             return;
         }
-        if (commentTemplate === 'fingerprint') {
-            const formattedDiff = JSON.stringify(JSON.parse(fingerprintDiff), null, 2);
-            const body = `This Pull Request introduces fingerprint changes against the base commit:
+        const body = commentTemplate === 'fingerprint'
+            ? createFingerprintBody()
+            : createBodyWithIdentifier(message, commentId);
+        if (previousComment) {
+            core.debug('Found existing comment, updating...');
+            await updateComment({ ...repoContext, body, commentId: previousComment.id });
+        }
+        else {
+            core.debug('Did not find a previous comment, creating new');
+            await createComment({ ...repoContext, body });
+        }
+    }
+    catch (error) {
+        core.setFailed(error instanceof Error ? error.message : 'Unknown error');
+    }
+}
+function validateInputs() {
+    if (commentTemplate !== 'fingerprint' && !message) {
+        throw new Error('If no template is used, a message is required');
+    }
+    if (commentTemplate === 'fingerprint' && !fingerprintDiff) {
+        throw new Error('Using a fingerprint comment template requires a fingerprint-diff input');
+    }
+    if (deleteOld && !commentId) {
+        throw new Error('Cannot delete a comment without an ID');
+    }
+}
+function createFingerprintBody() {
+    const formattedDiff = JSON.stringify(JSON.parse(fingerprintDiff), null, 2);
+    return `This Pull Request introduces fingerprint changes against the base commit:
 <details><summary>Fingerprint diff</summary>
 
 \`\`\`json
 ${formattedDiff}
 \`\`\`
-</details>\n${commentId ? createCommentIdentifier(commentId) : ''}
-`;
-            if (previousComment) {
-                core.debug('Fount existing comment, updating...');
-                await updateComment({ ...github.context.repo, octokit, body, issue_number, commentId: previousComment.id });
-                return;
-            }
-            core.debug('Did not find a previous comment, creating new');
-            await createComment({ ...github.context.repo, octokit, body, issue_number });
-            return;
-        }
-        const body = createBodyWithIdentifier(message, commentId);
-        if (previousComment) {
-            core.debug('Fount existing comment, updating...');
-            await updateComment({ ...github.context.repo, octokit, body, issue_number, commentId: previousComment.id });
-            return;
-        }
-        core.debug('Did not fint existing comment, creating new');
-        await createComment({ ...github.context.repo, octokit, body, issue_number });
-    }
-    catch (error) {
-        error instanceof Error ? core.setFailed(error.message) : core.setFailed('Unknown error');
-    }
+</details>
+${commentId ? createCommentIdentifier(commentId) : ''}`;
 }
 main();
 
