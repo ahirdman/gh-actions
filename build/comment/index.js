@@ -31014,14 +31014,14 @@ async function main() {
         });
         if (commentTemplate === 'fingerprint') {
             const formattedDiff = JSON.stringify(JSON.parse(fingerprintDiff), null, 2);
-            const body = `This Pull Request introduces fingerprint changes against the base commit:
-<details><summary>Fingerprint diff</summary>
+            const body = `This Pull Request introduces fingerprint changes against the base commit:\n
+        <details><summary>Fingerprint diff</summary>\n
 
-\`\`\`json
-${formattedDiff}
-\`\`\`
-</details>\n${commentId ? createCommentIdentifier(commentId) : ''}
-`;
+        \`\`\`json\n
+        ${formattedDiff}\n
+        \`\`\`\n
+        </details>\n
+        ${commentId ? createCommentIdentifier(commentId) : ''}`;
             if (previousComment) {
                 core.debug('Fount existing comment, updating...');
                 await updateComment({ ...github.context.repo, octokit, body, issue_number, commentId: previousComment.id });
