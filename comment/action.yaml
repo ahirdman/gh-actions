@@ -13,9 +13,13 @@ inputs:
   message:
     description: Message to be sent in comment
     required: false
+  comment-id:
+    description: Optional comment identifier. If supplied and found in subsequentent workflows, previous comment will be overwritten
+    required: false
   template:
     description: Optional pre-defined comment template, can be "none" or "fingerprint"
     required: false
+    default: "none"
   fingerprint-diff:
     description: Used with a "fingerprint" - template to pretty print fingerprint JSON output
     required: false

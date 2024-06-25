@@ -42,7 +42,8 @@
         "noUnusedVariables": "warn"
       },
       "style": {
-        "useBlockStatements": "warn"
+        "useBlockStatements": "warn",
+        "useImportType": "off"
       },
       "suspicious": {
         "noConsoleLog": "warn"
