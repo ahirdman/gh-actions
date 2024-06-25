@@ -28,6 +28,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           comment-id: regular-comment
+          delete-old: true
           message: |
             The Pull Request introduced fingerprint changes against the base commit:
             <details><summary>Fingerprint diff</summary>

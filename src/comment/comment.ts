@@ -75,3 +75,19 @@ export async function updateComment(args: UpdateCommentArgs): Promise<number> {
 
   return result.data.id;
 }
+
+interface DeleteCommentArgs extends OctokitRestArgs {
+  commentId: number;
+}
+
+export async function deleteComment(args: DeleteCommentArgs): Promise<void> {
+  const result = await args.octokit.rest.issues.deleteComment({
+    owner: args.owner,
+    repo: args.repo,
+    comment_id: args.commentId,
+  });
+
+  if (result.status !== 204) {
+    throw new Error(`Failed deleting comment. Reason: [${JSON.stringify(result.data, null, 2)}]`);
+  }
+}
