@@ -36,14 +36,14 @@ async function main() {
 
     if (input.commentTemplate === 'fingerprint') {
       const formattedDiff = JSON.stringify(JSON.parse(input.fingerprintDiff), null, 2);
-      const body = `This Pull Request introduces fingerprint changes against the base commit:
-<details><summary>Fingerprint diff</summary>
+      const body = `This Pull Request introduces fingerprint changes against the base commit:\n
+        <details><summary>Fingerprint diff</summary>\n
 
-\`\`\`json
-${formattedDiff}
-\`\`\`
-</details>\n${input.commentId ? createCommentIdentifier(input.commentId) : ''}
-`;
+        \`\`\`json\n
+        ${formattedDiff}\n
+        \`\`\`\n
+        </details>\n
+        ${input.commentId ? createCommentIdentifier(input.commentId) : ''}`;
 
       if (previousComment) {
         core.debug('Fount existing comment, updating...');
