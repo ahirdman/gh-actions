@@ -30938,6 +30938,7 @@ const message = core.getInput('message', { required: false });
 const commentId = core.getInput('comment-id', { required: false });
 const commentTemplate = core.getInput('template', { required: false });
 const fingerprintDiff = core.getInput('fingerprint-diff', { required: false });
+const deleteOld = core.getBooleanInput('delete-old', { required: false });
 
 // EXTERNAL MODULE: ./node_modules/@actions/github/lib/utils.js
 var utils = __nccwpck_require__(3030);
@@ -30987,6 +30988,16 @@ async function updateComment(args) {
     }
     return result.data.id;
 }
+async function deleteComment(args) {
+    const result = await args.octokit.rest.issues.deleteComment({
+        owner: args.owner,
+        repo: args.repo,
+        comment_id: args.commentId,
+    });
+    if (result.status !== 204) {
+        throw new Error(`Failed deleting comment. Reason: [${JSON.stringify(result.data, null, 2)}]`);
+    }
+}
 
 ;// CONCATENATED MODULE: ./src/comment/index.ts
 
@@ -31005,6 +31016,9 @@ async function main() {
         if (commentTemplate === 'fingerprint' && !fingerprintDiff) {
             throw new Error('Using a fingperint comment template requires a fingerprint-diff input');
         }
+        if (deleteOld && !commentId) {
+            throw new Error('Cannot delete a comment without an ID');
+        }
         const octokit = github.getOctokit(githubToken);
         const previousComment = await getPreviousComment({
             ...github.context.repo,
@@ -31012,16 +31026,22 @@ async function main() {
             octokit,
             issue_number,
         });
+        if (deleteOld) {
+            if (previousComment) {
+                await deleteComment({ ...github.context.repo, octokit, issue_number, commentId: previousComment.id });
+            }
+            return;
+        }
         if (commentTemplate === 'fingerprint') {
             const formattedDiff = JSON.stringify(JSON.parse(fingerprintDiff), null, 2);
-            const body = `This Pull Request introduces fingerprint changes against the base commit:\n
-        <details><summary>Fingerprint diff</summary>\n
+            const body = `This Pull Request introduces fingerprint changes against the base commit:
+<details><summary>Fingerprint diff</summary>
 
-        \`\`\`json\n
-        ${formattedDiff}\n
-        \`\`\`\n
-        </details>\n
-        ${commentId ? createCommentIdentifier(commentId) : ''}`;
+\`\`\`json
+${formattedDiff}
+\`\`\`
+</details>\n${commentId ? createCommentIdentifier(commentId) : ''}
+`;
             if (previousComment) {
                 core.debug('Fount existing comment, updating...');
                 await updateComment({ ...github.context.repo, octokit, body, issue_number, commentId: previousComment.id });

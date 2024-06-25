@@ -5,6 +5,7 @@ import {
   createBodyWithIdentifier,
   createComment,
   createCommentIdentifier,
+  deleteComment,
   getPreviousComment,
   updateComment,
 } from './comment';
@@ -25,6 +26,10 @@ async function main() {
       throw new Error('Using a fingperint comment template requires a fingerprint-diff input');
     }
 
+    if (input.deleteOld && !input.commentId) {
+      throw new Error('Cannot delete a comment without an ID');
+    }
+
     const octokit = github.getOctokit(input.githubToken);
 
     const previousComment = await getPreviousComment({
@@ -34,16 +39,24 @@ async function main() {
       issue_number,
     });
 
+    if (input.deleteOld) {
+      if (previousComment) {
+        await deleteComment({ ...github.context.repo, octokit, issue_number, commentId: previousComment.id });
+      }
+
+      return;
+    }
+
     if (input.commentTemplate === 'fingerprint') {
       const formattedDiff = JSON.stringify(JSON.parse(input.fingerprintDiff), null, 2);
-      const body = `This Pull Request introduces fingerprint changes against the base commit:\n
-        <details><summary>Fingerprint diff</summary>\n
+      const body = `This Pull Request introduces fingerprint changes against the base commit:
+<details><summary>Fingerprint diff</summary>
 
-        \`\`\`json\n
-        ${formattedDiff}\n
-        \`\`\`\n
-        </details>\n
-        ${input.commentId ? createCommentIdentifier(input.commentId) : ''}`;
+\`\`\`json
+${formattedDiff}
+\`\`\`
+</details>\n${input.commentId ? createCommentIdentifier(input.commentId) : ''}
+`;
 
       if (previousComment) {
         core.debug('Fount existing comment, updating...');

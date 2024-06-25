@@ -7,3 +7,4 @@ export const message = core.getInput('message', { required: false });
 export const commentId = core.getInput('comment-id', { required: false });
 export const commentTemplate = core.getInput('template', { required: false }) as CommentTemplate;
 export const fingerprintDiff = core.getInput('fingerprint-diff', { required: false });
+export const deleteOld = core.getBooleanInput('delete-old', { required: false });
