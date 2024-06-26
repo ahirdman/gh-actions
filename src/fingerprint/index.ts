@@ -137,9 +137,9 @@ async function checkoutCommit(commit: string) {
 }
 
 async function getFingerprint(): Promise<Fingerprint> {
-  await exec('npm install');
+  await exec('bun install'); //TODO: Add engine param
 
-  const { stdout, stderr } = await getExecOutput('npx @expo/fingerprint .');
+  const { stdout, stderr } = await getExecOutput('bunx @expo/fingerprint .');
 
   if (stderr) {
     core.setFailed('Running @expo/fingerpint failed');
