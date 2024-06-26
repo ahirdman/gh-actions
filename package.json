@@ -1,8 +1,6 @@
 {
   "name": "gh-actions",
   "version": "0.0.1",
-  "module": "index.ts",
-  "type": "module",
   "scripts": {
     "build": "bash build.sh",
     "test": "echo \"error: no test specified\" && exit 1",
