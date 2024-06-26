@@ -17,7 +17,7 @@ inputs:
     description: Optional comment identifier. If supplied and found in subsequentent workflows, previous comment will be overwritten
     required: false
   template:
-    description: Optional pre-defined comment template, can be "none" or "fingerprint"
+    description: Optional pre-defined comment template, can be "none" or "fingerprint". Defaults to "none"
     required: false
     default: "none"
   fingerprint-diff:

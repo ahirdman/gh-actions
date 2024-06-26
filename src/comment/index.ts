@@ -50,7 +50,7 @@ async function main() {
 }
 
 function validateInputs() {
-  if (input.commentTemplate !== 'fingerprint' && !input.message) {
+  if (!input.deleteOld && input.commentTemplate === 'none' && !input.message) {
     throw new Error('If no template is used, a message is required');
   }
 
