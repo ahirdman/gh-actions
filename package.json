@@ -6,7 +6,8 @@
     "test": "echo \"error: no test specified\" && exit 1",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "type-check": "npx tsc --noemit"
+    "type-check": "npx tsc --noemit",
+    "verify": "bun run lint && bun run type-check"
   },
   "author": "Alexander Hirdman",
   "license": "ISC",

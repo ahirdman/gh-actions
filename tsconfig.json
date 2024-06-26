@@ -1,9 +1,13 @@
 {
   "compilerOptions": {
+    "jsx": "react-jsx",
     "module": "CommonJS",
     "moduleResolution": "node",
     "types": ["node"],
-    "outDir": "./build"
+    "outDir": "./build",
+    "paths": {
+      "#fingerprint/*": ["./src/fingerprint*"]
+    }
   },
   "exclude": ["build", "node_modules"]
 }
