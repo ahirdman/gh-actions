@@ -98,11 +98,9 @@ interface GetCurrentFingerprintArgs {
 
 async function getCurrentFingerprint({ currentCommitSha }: GetCurrentFingerprintArgs): Promise<Fingerprint> {
   await checkoutCommit(currentCommitSha);
-  await exec('npm install');
+  const currentFingerprint = getFingerprint();
 
-  const { stdout } = await getExecOutput('npx @expo/fingerprint .');
-
-  return JSON.parse(stdout.trim());
+  return currentFingerprint;
 }
 
 interface CreateDiffArgs {

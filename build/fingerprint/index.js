@@ -41611,9 +41611,8 @@ async function getPrevFingerprint({ profile, commitInput, storedProductionCommit
 }
 async function getCurrentFingerprint({ currentCommitSha }) {
     await checkoutCommit(currentCommitSha);
-    await (0, exec_1.exec)('npm install');
-    const { stdout } = await (0, exec_1.getExecOutput)('npx @expo/fingerprint .');
-    return JSON.parse(stdout.trim());
+    const currentFingerprint = getFingerprint();
+    return currentFingerprint;
 }
 function createDiff({ currentFingerprint, previousFingerprint }) {
     if (!currentFingerprint || !previousFingerprint) {
