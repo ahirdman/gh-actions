@@ -41631,8 +41631,8 @@ async function checkoutCommit(commit) {
     await (0, exec_1.exec)(`git checkout ${commit}`);
 }
 async function getFingerprint() {
-    await (0, exec_1.exec)('npm install');
-    const { stdout, stderr } = await (0, exec_1.getExecOutput)('npx @expo/fingerprint .');
+    await (0, exec_1.exec)('bun install'); //TODO: Add engine param
+    const { stdout, stderr } = await (0, exec_1.getExecOutput)('bunx @expo/fingerprint .');
     if (stderr) {
         core.setFailed('Running @expo/fingerpint failed');
     }
